@@ -1,6 +1,7 @@
+import { MediaPlayer, LogLevel } from 'dashjs';
 import { EventsList, Level, Source } from '../interfaces';
 import { HAS_MSE } from '../utils/constants';
-import { addEvent, loadScript } from '../utils/general';
+import { addEvent } from '../utils/general';
 import { isDashSource } from '../utils/media';
 import Native from './native';
 
@@ -19,22 +20,8 @@ class DashMedia extends Native {
     constructor(element: HTMLMediaElement, mediaSource: Source, options?: unknown) {
         super(element, mediaSource);
         this.#options = options;
-
-        this._assign = this._assign.bind(this);
-        this._preparePlayer = this._preparePlayer.bind(this);
-
-        this.promise =
-            typeof dashjs === 'undefined'
-                ? // Ever-green script
-                  loadScript('https://cdn.dashjs.org/latest/dash.all.min.js')
-                : new Promise((resolve) => {
-                      resolve({});
-                  });
-
-        this.promise.then(() => {
-            this.#player = dashjs.MediaPlayer().create();
-            this.instance = this.#player;
-        });
+        this.#player = MediaPlayer().create();
+        this.instance = this.#player;
     }
 
     canPlayType(mimeType: string): boolean {
@@ -48,12 +35,19 @@ class DashMedia extends Native {
         const e = addEvent('loadedmetadata');
         this.element.dispatchEvent(e);
 
-        if (!this.#events) {
-            this.#events = dashjs.MediaPlayer.events;
-            Object.keys(this.#events).forEach((event) => {
-                this.#player.on(this.#events[event], this._assign);
+        if (!Object.keys(this.#events).length) {
+            this.#events = MediaPlayer.events;
+            Object.keys(this.#events).forEach(event => {
+                this.#player.on(this.#events[event], this._assign.bind(this));
             });
         }
+
+        
+        this.promise = new Promise<void>(resolve => {
+            this.#player.on('streamActivated', () => {
+                resolve();
+            });
+        });
     }
 
     destroy(): void {
@@ -69,13 +63,13 @@ class DashMedia extends Native {
     set src(media: Source) {
         if (isDashSource(media)) {
             this.destroy();
-            this.#player = dashjs.MediaPlayer().create();
+            this.#player = MediaPlayer().create();
             this._preparePlayer();
             this.#player.attachSource(media.src);
 
-            this.#events = dashjs.MediaPlayer.events;
-            Object.keys(this.#events).forEach((event) => {
-                this.#player.on(this.#events[event], this._assign);
+            this.#events = MediaPlayer.events;
+            Object.keys(this.#events).forEach(event => {
+                this.#player.on(this.#events[event], this._assign.bind(this));
             });
         }
     }
@@ -84,28 +78,23 @@ class DashMedia extends Native {
         const levels: Level[] = [];
         if (this.#player) {
             const bitrates = this.#player.getBitrateInfoListFor('video');
-            if (bitrates.length) {
-                bitrates.forEach((item: number) => {
-                    if (bitrates[item]) {
-                        const { height, name } = bitrates[item];
-                        const level = {
-                            height,
-                            id: `${item}`,
-                            label: name || null,
-                        };
-                        levels.push(level);
-                    }
-                });
+            for (let i = 0; i < bitrates.length; i++) {
+                const level = {
+                    height: bitrates[i].height,
+                    id: `${i}`,
+                    label: bitrates[i].scanType,
+                };
+                levels.push(level);
             }
         }
         return levels;
     }
 
     set level(level: string) {
-        if (level === '0') {
-            this.#player.setAutoSwitchQuality(true);
+        if (level === '-1') {
+            this.#player.updateSettings({ streaming: { abr: { autoSwitchBitrate: { video: true } } } });
         } else {
-            this.#player.setAutoSwitchQuality(false);
+            this.#player.updateSettings({ streaming: { abr: { autoSwitchBitrate: { video: false } } } });
             this.#player.setQualityFor('video', level);
         }
     }
@@ -134,11 +123,19 @@ class DashMedia extends Native {
     private _preparePlayer(): void {
         this.#player.updateSettings({
             debug: {
-                logLevel: dashjs.Debug.LOG_LEVEL_NONE,
+                // logLevel: LogLevel.LOG_LEVEL_DEBUG,
+                logLevel: LogLevel.LOG_LEVEL_ERROR,
             },
             streaming: {
-                fastSwitchEnabled: true,
-                scheduleWhilePaused: false,
+                abr: {
+                    limitBitrateByPortal: true,
+                },
+                buffer: {
+                    fastSwitchEnabled: true,
+                },
+                scheduling: {
+                    scheduleWhilePaused: false,
+                },
             },
             ...((this.#options as Record<string, unknown>) || {}),
         });

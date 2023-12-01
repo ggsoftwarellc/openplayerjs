@@ -60,7 +60,7 @@ class Controls implements PlayerComponent {
         };
 
         this.events.ended = (): void => {
-            this.#player.getContainer().classList.remove('op-controls--hidden');
+            // this.#player.getContainer().classList.remove('op-controls--hidden');
         };
 
         this.#player.getElement().addEventListener('controlschanged', this.events.controlschanged, EVENT_OPTIONS);
@@ -69,12 +69,12 @@ class Controls implements PlayerComponent {
         const { alwaysVisible } = this.#player.getOptions().controls || {};
 
         if (!alwaysVisible) {
-            const showControls = (): void => {
-                if (isMediaVideo) {
-                    this.#player.getContainer().classList.remove('op-controls--hidden');
-                    this._stopControlTimer();
-                }
-            };
+            // const showControls = (): void => {
+            //     if (isMediaVideo) {
+            //         this.#player.getContainer().classList.remove('op-controls--hidden');
+            //         this._stopControlTimer();
+            //     }
+            // };
 
             this.events.mouse.mouseenter = (): void => {
                 if (isMediaVideo && !this.#player.activeElement().paused) {
@@ -91,7 +91,7 @@ class Controls implements PlayerComponent {
                 }
             };
             this.events.mouse.mousemove = (): void => {
-                if (isMediaVideo && !this.#player.activeElement().paused) {
+                if (isMediaVideo) {
                     if (this.#player.activeElement().currentTime) {
                         this.#player.loader.setAttribute('aria-hidden', 'true');
                         this.#player.playBtn.setAttribute('aria-hidden', this.#player.isMedia() ? 'false' : 'true');
@@ -111,7 +111,7 @@ class Controls implements PlayerComponent {
                 }
             };
             this.events.mouse.mouseleave = (): void => {
-                if (isMediaVideo && !this.#player.activeElement().paused) {
+                if (isMediaVideo) {
                     this._startControlTimer(1000);
                 }
             };
@@ -120,11 +120,11 @@ class Controls implements PlayerComponent {
                     this._startControlTimer(this.#player.getOptions().hidePlayBtnTimer || 350);
                 }
             };
-            this.events.media.loadedmetadata = showControls.bind(this);
-            this.events.media.pause = showControls.bind(this);
-            this.events.media.waiting = showControls.bind(this);
-            this.events.media.stalled = showControls.bind(this);
-            this.events.media.playererror = showControls.bind(this);
+            // this.events.media.loadedmetadata = showControls.bind(this);
+            // this.events.media.pause = showControls.bind(this);
+            // this.events.media.waiting = showControls.bind(this);
+            // this.events.media.stalled = showControls.bind(this);
+            // this.events.media.playererror = showControls.bind(this);
 
             Object.keys(this.events.media).forEach((event) => {
                 this.#player.getElement().addEventListener(event, this.events.media[event], EVENT_OPTIONS);
@@ -140,7 +140,7 @@ class Controls implements PlayerComponent {
 
             // Initial countdown to hide controls
             if (isMediaVideo && !this.#player.activeElement().paused) {
-                this._startControlTimer(3000);
+                this._startControlTimer(0);
             }
         }
     }
@@ -185,7 +185,7 @@ class Controls implements PlayerComponent {
     private _createControlsLayer(): void {
         if (!this.#controls || !this.#player.getContainer().querySelector('.op-controls')) {
             this.#controls = document.createElement('div');
-            this.#controls.className = 'op-controls';
+            this.#controls.className = 'op-controls op-controls--hidden';
             this.#player.getContainer().appendChild(this.#controls);
 
             const messageContainer = document.createElement('div');

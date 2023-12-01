@@ -187,7 +187,7 @@ class Levels implements PlayerComponent {
             this.#player.getElement().addEventListener(event, this.#events.media[event], EVENT_OPTIONS);
         });
 
-        document.addEventListener('click', this.#events.global.click, EVENT_OPTIONS);
+        this.#player.getElement().getRootNode().addEventListener('click', this.#events.global.click, EVENT_OPTIONS);
         if (connection) {
             connection.addEventListener('change', this.#events.global.connection, EVENT_OPTIONS);
         }

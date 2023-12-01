@@ -47,6 +47,7 @@
         "create-d-types": "tsc -p tsconfig-types.json",
         "create-esm": "tsc -p tsconfig-esm.json",
         "release": "npm run build && release-it",
+        "stats": "webpack --json",
         "test": "npm run test:sources && tsd",
         "test:sources": "karma start --single-run --browsers ChromeHeadless --log-level info karma.conf.js",
         "test:dev": "karma start --watch --browsers Chrome karma.conf.js",
@@ -115,7 +116,7 @@
     },
     "dependencies": {
         "auto-changelog": "^2.4.0",
-        "core-js": "^3.22.8"
+        "dashjs": "file:../dash.js"
     },
     "engines": {
         "node": ">=16.0.0"

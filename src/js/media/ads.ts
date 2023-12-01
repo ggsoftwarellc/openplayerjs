@@ -695,16 +695,16 @@ class Ads {
             this.#started = true;
             this.#playTriggered = true;
             this.load(true);
-            console.warn(`Ad warning: ${error.toString()}`);
+            // console.warn(`Ad warning: ${error.toString()}`);
         } else {
             // Unless there's a fatal error, do not destroy the Ads manager
             if (fatalErrorCodes.indexOf(error.getErrorCode()) > -1) {
                 if (this.#manager) {
                     this.#manager.destroy();
                 }
-                console.error(`Ad error: ${error.toString()}`);
+                // console.error(`Ad error: ${error.toString()}`);
             } else {
-                console.warn(`Ad warning: ${error.toString()}`);
+                // console.warn(`Ad warning: ${error.toString()}`);
             }
             this.#adEvent = null;
             if (this.#autostart === true || this.#autostartMuted === true || this.#started === true) {
@@ -720,6 +720,7 @@ class Ads {
         const adsRenderingSettings = new google.ima.AdsRenderingSettings();
         adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = false;
         adsRenderingSettings.enablePreloading = this.#options.enablePreloading;
+        adsRenderingSettings.uiElements = [google.ima.UiElements.AD_ATTRIBUTION];
         // Get the ads manager.
         this.#manager = managerLoadedEvent.getAdsManager(this.#element, adsRenderingSettings);
         this._start(this.#manager);
@@ -936,6 +937,9 @@ class Ads {
             this.#request.adTagUrl = ads;
         }
 
+        this.#request.omidAccessModeRules[google.ima.OmidVerificationVendor.GOOGLE] = google.ima.OmidAccessMode.FULL;
+        this.#request.omidAccessModeRules[google.ima.OmidVerificationVendor.OTHER] = google.ima.OmidAccessMode.FULL;
+
         const width = this.#element.parentElement ? this.#element.parentElement.offsetWidth : 0;
         const height = this.#element.parentElement ? this.#element.parentElement.offsetHeight : 0;
         this.#request.linearAdSlotWidth = width;
@@ -943,7 +947,11 @@ class Ads {
         this.#request.nonLinearAdSlotWidth = width;
         this.#request.nonLinearAdSlotHeight = height / 3;
         this.#request.setAdWillAutoPlay(this.#autostart);
-        this.#request.setAdWillPlayMuted(this.#autostartMuted);
+        if (this.#request.adTagUrl && this.#request.adTagUrl.includes('vpmute=1')) {
+            this.#request.setAdWillPlayMuted(true);
+        } else {
+            this.#request.setAdWillPlayMuted(false);
+        }
         this.#loader.requestAds(this.#request);
     }
 

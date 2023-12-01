@@ -110,7 +110,7 @@ class Settings implements PlayerComponent {
         Object.keys(this.#events).forEach((event) => {
             this.#player.getElement().addEventListener(event, this.#events.media[event], EVENT_OPTIONS);
         });
-        document.addEventListener('click', this.#events.global.click, EVENT_OPTIONS);
+        this.#player.getElement().getRootNode().addEventListener('click', this.#events.global.click, EVENT_OPTIONS);
         document.addEventListener('keydown', this.#events.global.click, EVENT_OPTIONS);
         if (typeof window !== 'undefined') {
             window.addEventListener('resize', this.#events.global.resize, EVENT_OPTIONS);
@@ -279,7 +279,7 @@ class Settings implements PlayerComponent {
             }
         };
 
-        document.addEventListener('click', this.#events.global['settings.submenu'], EVENT_OPTIONS);
+        this.#player.getElement().getRootNode().addEventListener('click', this.#events.global['settings.submenu'], EVENT_OPTIONS);
         this.#player.getElement().addEventListener('controlshidden', this.hideEvent, EVENT_OPTIONS);
     }
 

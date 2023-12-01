@@ -1,3 +1,5 @@
+import { ProtectionDataSet } from 'dashjs';
+
 /**
  * M(PEG)-DASH options
  *
@@ -13,5 +15,5 @@ export default interface DashOptions {
     /**
      * Digital rights management object to allow play restricted media.
      */
-    readonly drm?: Record<string, unknown>;
+     readonly drm?: ProtectionDataSet;
 }
